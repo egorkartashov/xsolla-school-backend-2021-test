@@ -1,10 +1,12 @@
-package models
+package dto
 
 import (
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-type Product struct {
+type ProductDto struct {
+	gorm.Model
 	Id           uuid.UUID
 	Sku          string
 	Name         string

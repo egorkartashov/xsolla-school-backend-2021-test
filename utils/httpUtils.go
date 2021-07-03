@@ -5,8 +5,10 @@ import (
 	"net/http"
 )
 
-func RespondJson(writer http.ResponseWriter, statusCode int, data map[string]interface{}) {
+func RespondJson(writer http.ResponseWriter, statusCode int, data interface{}) {
 	writer.WriteHeader(statusCode)
 	writer.Header().Add("Content-Type", "application/json")
-	_ = json.NewEncoder(writer).Encode(data)
+	if data != nil {
+		_ = json.NewEncoder(writer).Encode(data)
+	}
 }

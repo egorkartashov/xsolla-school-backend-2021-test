@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/egorkartashov/xsolla-school-backend-2021-test/controllers"
-	"github.com/gorilla/mux"
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/app"
 	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"net/http"
 	"os"
 )
@@ -16,10 +17,19 @@ func main() {
 		fmt.Print(err)
 	}
 
+	dbHost := os.Getenv("POSTGRES_HOST")
+	dbName := os.Getenv("POSTGRES_DB")
+	dbUsername := os.Getenv("POSTGRES_USER")
+	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	host := fmt.Sprintf("host=%s user=%s password=%s dbname=%s", dbHost, dbUsername, dbPassword, dbName)
+	db, err := gorm.Open(postgres.Open(host), &gorm.Config{})
+	if err != nil {
+		panic(fmt.Sprintf("Failed to connect to database: %s", err.Error()))
+	}
+
 	fmt.Println("Hello, world.")
 
-	router := mux.NewRouter()
-	router.HandleFunc("/api/ping", controllers.GetPing)
+	appInstance := app.New(db)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -28,7 +38,7 @@ func main() {
 
 	fmt.Println("Using port: " + port)
 
-	err = http.ListenAndServe(":"+port, router)
+	err = http.ListenAndServe(":"+port, appInstance.Router)
 
 	if err != nil {
 		fmt.Print(err)
