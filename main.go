@@ -29,7 +29,10 @@ func main() {
 
 	fmt.Println("Hello, world.")
 
-	appInstance := app.New(db)
+	appInstance, err := app.New(db)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to start application: %s", err.Error()))
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {

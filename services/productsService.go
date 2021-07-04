@@ -28,16 +28,46 @@ func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, bool)
 		return nil, false
 	}
 
-	productDto := MapModelToDto(product)
+	productDto := mapModelToDto(product)
 	return productDto, true
 }
 
-func MapModelToDto(product *models.Product) *dto.ProductDto {
+func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.ProductDto, bool) {
+	product := mapDtoToModel(productDto)
+	errChan := make(chan error)
+	productChan := make(chan *models.Product)
+	go func() {
+		createdProduct, err := service.productsRepo.CreateProduct(product)
+		productChan <- createdProduct
+		errChan <- err
+	}()
+
+	err := <-errChan
+	product = <-productChan
+	if err != nil {
+		return nil, false
+	}
+
+	createdProductDto := mapModelToDto(product)
+	return createdProductDto, true
+}
+
+func mapModelToDto(product *models.Product) *dto.ProductDto {
 	return &dto.ProductDto{
-		Id:           product.Id,
+		Id:           product.ID,
 		Sku:          product.Sku,
 		Name:         product.Name,
 		Type:         product.Type,
 		PriceInCents: product.PriceInCents,
+	}
+}
+
+func mapDtoToModel(productDto *dto.ProductDto) *models.Product {
+	return &models.Product{
+		ID:           productDto.Id,
+		Sku:          productDto.Sku,
+		Name:         productDto.Name,
+		Type:         productDto.Type,
+		PriceInCents: productDto.PriceInCents,
 	}
 }

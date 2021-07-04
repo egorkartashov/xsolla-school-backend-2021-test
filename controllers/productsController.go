@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"encoding/json"
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/dto"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/services"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/utils"
 	"github.com/google/uuid"
@@ -21,13 +23,13 @@ func NewProductsController(productsService *services.ProductsService) *ProductsC
 func (controller *ProductsController) GetProduct(writer http.ResponseWriter, request *http.Request) {
 	productIdStr, found := mux.Vars(request)["id"]
 	if found == false {
-		respondBadId(writer)
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not find product ID")
 		return
 	}
 
 	productId, err := uuid.Parse(productIdStr)
 	if err != nil {
-		respondBadId(writer)
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse product ID")
 		return
 	}
 
@@ -39,8 +41,32 @@ func (controller *ProductsController) GetProduct(writer http.ResponseWriter, req
 	}
 }
 
-func respondBadId(writer http.ResponseWriter) {
-	errorResponse := make(map[string]interface{})
-	errorResponse["message"] = "Could not parse product ID"
-	utils.RespondJson(writer, http.StatusBadRequest, errorResponse)
+func (controller *ProductsController) PostProduct(writer http.ResponseWriter, request *http.Request) {
+	productDto := &dto.ProductDto{}
+	if err := json.NewDecoder(request.Body).Decode(productDto); err != nil {
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse request body")
+	}
+
+	createdProductDto, success := controller.productsService.CreateProduct(productDto)
+	if success {
+		utils.RespondJson(writer, http.StatusCreated, createdProductDto)
+	} else {
+		utils.RespondErrorJson(writer, http.StatusInternalServerError, "Could not create product")
+	}
+}
+
+func (controller *ProductsController) PutProduct(writer http.ResponseWriter, request *http.Request) {
+	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
+}
+
+func (controller *ProductsController) DeleteProductById(writer http.ResponseWriter, request *http.Request) {
+	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
+}
+
+func (controller *ProductsController) DeleteProductBySku(writer http.ResponseWriter, request *http.Request) {
+	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
+}
+
+func (controller *ProductsController) GetAllTypes(writer http.ResponseWriter, request *http.Request) {
+	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
 }
