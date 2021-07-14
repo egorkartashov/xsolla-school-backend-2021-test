@@ -24,12 +24,15 @@ func main() {
 	host := fmt.Sprintf("host=%s user=%s password=%s dbname=%s", dbHost, dbUsername, dbPassword, dbName)
 	db, err := gorm.Open(postgres.Open(host), &gorm.Config{})
 	if err != nil {
-		panic(fmt.Sprintf("Failed to connect to database: %s", err.Error()))
+		panic(fmt.Sprintf("Failed to connect to database: %s\n", err.Error()))
 	}
 
 	fmt.Println("Hello, world.")
 
-	appInstance := app.New(db)
+	appInstance, err := app.New(db)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to start application: %s\n", err.Error()))
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {

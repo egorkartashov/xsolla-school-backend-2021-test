@@ -11,6 +11,11 @@ type ProductsService struct {
 	productsRepo *repos.ProductsRepo
 }
 
+type result struct {
+	product *models.Product
+	err     error
+}
+
 func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
 	return &ProductsService{
 		productsRepo: productsRepo,
@@ -28,16 +33,50 @@ func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, bool)
 		return nil, false
 	}
 
-	productDto := MapModelToDto(product)
+	productDto := mapModelToDto(product)
 	return productDto, true
 }
 
-func MapModelToDto(product *models.Product) *dto.ProductDto {
+func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.ProductDto, error) {
+	product := mapDtoToModel(productDto)
+	resultChan := make(chan result)
+	go func() {
+		createdProduct, err := service.productsRepo.CreateProduct(product)
+		resultChan <- result{product: createdProduct, err: err}
+	}()
+
+	result := <-resultChan
+	if result.err != nil {
+		return nil, result.err
+	}
+
+	createdProductDto := mapModelToDto(result.product)
+	return createdProductDto, nil
+}
+
+func mapModelToDto(product *models.Product) *dto.ProductDto {
 	return &dto.ProductDto{
-		Id:           product.Id,
+		Id:           &product.ID,
 		Sku:          product.Sku,
 		Name:         product.Name,
 		Type:         product.Type,
 		PriceInCents: product.PriceInCents,
+	}
+}
+
+func mapDtoToModel(productDto *dto.ProductDto) *models.Product {
+	var id uuid.UUID
+	if productDto.Id == nil {
+		id, _ = uuid.NewUUID()
+	} else {
+		id = *productDto.Id
+	}
+
+	return &models.Product{
+		ID:           id,
+		Sku:          productDto.Sku,
+		Name:         productDto.Name,
+		Type:         productDto.Type,
+		PriceInCents: productDto.PriceInCents,
 	}
 }

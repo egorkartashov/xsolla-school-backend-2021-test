@@ -24,3 +24,11 @@ func (repo *ProductsRepo) GetProductOrNil(id uuid.UUID) *models.Product {
 	}
 	return &product
 }
+
+func (repo *ProductsRepo) CreateProduct(product *models.Product) (*models.Product, error) {
+	product.ID = uuid.New()
+	if err := repo.db.Create(product).Error; err != nil {
+		return nil, err
+	}
+	return product, nil
+}
