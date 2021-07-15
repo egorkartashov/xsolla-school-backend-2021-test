@@ -54,6 +54,23 @@ func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.
 	return createdProductDto, nil
 }
 
+func (service *ProductsService) UpdateProduct(productDto *dto.ProductDto) (*dto.ProductDto, error) {
+	product := mapDtoToModel(productDto)
+	resultChan := make(chan result)
+	go func() {
+		createdProduct, err := service.productsRepo.UpdateProduct(product)
+		resultChan <- result{product: createdProduct, err: err}
+	}()
+
+	result := <-resultChan
+	if result.err != nil {
+		return nil, result.err
+	}
+
+	updatedProductDto := mapModelToDto(result.product)
+	return updatedProductDto, nil
+}
+
 func mapModelToDto(product *models.Product) *dto.ProductDto {
 	return &dto.ProductDto{
 		Id:           &product.ID,

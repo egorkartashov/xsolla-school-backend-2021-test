@@ -32,3 +32,16 @@ func (repo *ProductsRepo) CreateProduct(product *models.Product) (*models.Produc
 	}
 	return product, nil
 }
+
+func (repo *ProductsRepo) UpdateProduct(product *models.Product) (*models.Product, error) {
+	currentProduct := models.Product{}
+	if err := repo.db.Where("id = ?", product.ID).First(&currentProduct).Error; err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.Model(currentProduct).Updates(product).Error; err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}

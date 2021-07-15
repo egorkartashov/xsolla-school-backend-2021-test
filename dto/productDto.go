@@ -2,11 +2,9 @@ package dto
 
 import (
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type ProductDto struct {
-	gorm.Model
 	Id           *uuid.UUID `json:"id,omitempty" validate:"omitempty,uuid"`
 	Sku          string     `json:"sku" validate:"required"`
 	Name         string     `json:"name" validate:"required"`
