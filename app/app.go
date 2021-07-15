@@ -35,6 +35,7 @@ func New(db *gorm.DB) (*App, error) {
 
 func (a *App) registerHandlers() {
 	a.Router.HandleFunc("/api/ping", controllers.GetPing)
+	a.Router.HandleFunc("/api/products", a.productsController.GetProducts).Methods("GET")
 	a.Router.HandleFunc("/api/products/{id}", a.productsController.GetProduct).Methods("GET")
 	a.Router.HandleFunc("/api/products", a.productsController.PostProduct).Methods("POST")
 	a.Router.HandleFunc("/api/products/{id}", a.productsController.PutProduct).Methods("PUT")

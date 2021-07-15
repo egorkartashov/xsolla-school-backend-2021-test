@@ -22,6 +22,17 @@ func NewProductsController(productsService *services.ProductsService) *ProductsC
 	}
 }
 
+func (controller *ProductsController) GetProducts(writer http.ResponseWriter, _ *http.Request) {
+	// TODO pagination (offset, limit)
+
+	products, err := controller.productsService.GetProducts()
+	if err == nil {
+		utils.RespondJson(writer, http.StatusOK, products)
+	} else {
+		utils.RespondErrorJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get products: %s", err))
+	}
+}
+
 func (controller *ProductsController) GetProduct(writer http.ResponseWriter, request *http.Request) {
 	productIdStr, found := mux.Vars(request)["id"]
 	if !found {
@@ -35,11 +46,11 @@ func (controller *ProductsController) GetProduct(writer http.ResponseWriter, req
 		return
 	}
 
-	product, found := controller.productsService.GetProduct(productId)
-	if found {
+	product, err := controller.productsService.GetProduct(productId)
+	if err == nil {
 		utils.RespondJson(writer, http.StatusOK, product)
 	} else {
-		utils.RespondJson(writer, http.StatusNotFound, nil)
+		utils.RespondJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get product: %s", err))
 	}
 }
 

@@ -11,9 +11,14 @@ type ProductsService struct {
 	productsRepo *repos.ProductsRepo
 }
 
-type result struct {
+type singleProductResult struct {
 	product *models.Product
 	err     error
+}
+
+type productsListResult struct {
+	productsList *[]models.Product
+	err          error
 }
 
 func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
@@ -22,27 +27,49 @@ func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
 	}
 }
 
-func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, bool) {
-	result := make(chan *models.Product)
+func (service *ProductsService) GetProducts() (*[]dto.ProductDto, error) {
+	resultChan := make(chan productsListResult)
 	go func() {
-		result <- service.productsRepo.GetProductOrNil(id)
+		products, err := service.productsRepo.GetProducts()
+		resultChan <- productsListResult{productsList: products, err: err}
 	}()
 
-	product := <-result
-	if product == nil {
-		return nil, false
+	result := <-resultChan
+	if result.err != nil {
+		return nil, result.err
 	}
 
-	productDto := mapModelToDto(product)
-	return productDto, true
+	var productsDtoList []dto.ProductDto
+	for _, product := range *result.productsList {
+		productDto := mapModelToDto(&product)
+		productsDtoList = append(productsDtoList, *productDto)
+	}
+
+	return &productsDtoList, nil
+}
+
+func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, error) {
+	resultChan := make(chan singleProductResult)
+	go func() {
+		product, err := service.productsRepo.GetProduct(id)
+		resultChan <- singleProductResult{product: product, err: err}
+	}()
+
+	result := <-resultChan
+	if result.err == nil {
+		return nil, result.err
+	}
+
+	productDto := mapModelToDto(result.product)
+	return productDto, nil
 }
 
 func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.ProductDto, error) {
 	product := mapDtoToModel(productDto)
-	resultChan := make(chan result)
+	resultChan := make(chan singleProductResult)
 	go func() {
 		createdProduct, err := service.productsRepo.CreateProduct(product)
-		resultChan <- result{product: createdProduct, err: err}
+		resultChan <- singleProductResult{product: createdProduct, err: err}
 	}()
 
 	result := <-resultChan
@@ -56,10 +83,10 @@ func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.
 
 func (service *ProductsService) UpdateProduct(productDto *dto.ProductDto) (*dto.ProductDto, error) {
 	product := mapDtoToModel(productDto)
-	resultChan := make(chan result)
+	resultChan := make(chan singleProductResult)
 	go func() {
 		createdProduct, err := service.productsRepo.UpdateProduct(product)
-		resultChan <- result{product: createdProduct, err: err}
+		resultChan <- singleProductResult{product: createdProduct, err: err}
 	}()
 
 	result := <-resultChan

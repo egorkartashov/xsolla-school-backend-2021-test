@@ -16,13 +16,22 @@ func NewProductsRepo(db *gorm.DB) *ProductsRepo {
 	}
 }
 
-func (repo *ProductsRepo) GetProductOrNil(id uuid.UUID) *models.Product {
-	// TODO lock or smth
+func (repo *ProductsRepo) GetProducts() (*[]models.Product, error) {
+	var products []models.Product
+	if err := repo.db.Find(&products).Error; err != nil {
+		return nil, err
+	}
+
+	return &products, nil
+}
+
+func (repo *ProductsRepo) GetProduct(id uuid.UUID) (*models.Product, error) {
 	var product models.Product
 	if err := repo.db.First(&product, id).Error; err != nil {
-		return nil
+		return nil, err
 	}
-	return &product
+
+	return &product, nil
 }
 
 func (repo *ProductsRepo) CreateProduct(product *models.Product) (*models.Product, error) {
