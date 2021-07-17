@@ -56,7 +56,23 @@ func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, error
 	}()
 
 	result := <-resultChan
-	if result.err == nil {
+	if result.err != nil {
+		return nil, result.err
+	}
+
+	productDto := mapModelToDto(result.product)
+	return productDto, nil
+}
+
+func (service *ProductsService) GetProductBySku(sku string) (*dto.ProductDto, error) {
+	resultChan := make(chan singleProductResult)
+	go func() {
+		product, err := service.productsRepo.GetProductBySku(sku)
+		resultChan <- singleProductResult{product: product, err: err}
+	}()
+
+	result := <-resultChan
+	if result.err != nil {
 		return nil, result.err
 	}
 
@@ -96,6 +112,45 @@ func (service *ProductsService) UpdateProduct(productDto *dto.ProductDto) (*dto.
 
 	updatedProductDto := mapModelToDto(result.product)
 	return updatedProductDto, nil
+}
+
+func (service *ProductsService) UpdateProductBySku(productDto *dto.ProductDto) (*dto.ProductDto, error) {
+	product := mapDtoToModel(productDto)
+	resultChan := make(chan singleProductResult)
+	go func() {
+		updatedProduct, err := service.productsRepo.UpdateProductBySku(product)
+		resultChan <- singleProductResult{product: updatedProduct, err: err}
+	}()
+
+	result := <-resultChan
+	if result.err != nil {
+		return nil, result.err
+	}
+
+	updatedProductDto := mapModelToDto(result.product)
+	return updatedProductDto, nil
+}
+
+func (service *ProductsService) DeleteProduct(productId uuid.UUID) error {
+	errorChan := make(chan error)
+	go func() {
+		err := service.productsRepo.DeleteProduct(productId)
+		errorChan <- err
+	}()
+
+	err := <-errorChan
+	return err
+}
+
+func (service *ProductsService) DeleteProductBySku(sku string) error {
+	errorChan := make(chan error)
+	go func() {
+		err := service.productsRepo.DeleteProductBySku(sku)
+		errorChan <- err
+	}()
+
+	err := <-errorChan
+	return err
 }
 
 func mapModelToDto(product *models.Product) *dto.ProductDto {

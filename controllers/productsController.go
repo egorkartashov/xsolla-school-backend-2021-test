@@ -33,38 +33,9 @@ func (controller *ProductsController) GetProducts(writer http.ResponseWriter, _ 
 	}
 }
 
-func (controller *ProductsController) GetProduct(writer http.ResponseWriter, request *http.Request) {
-	productIdStr, found := mux.Vars(request)["id"]
-	if !found {
-		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not find product ID")
-		return
-	}
-
-	productId, err := uuid.Parse(productIdStr)
-	if err != nil {
-		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse product ID")
-		return
-	}
-
-	product, err := controller.productsService.GetProduct(productId)
-	if err == nil {
-		utils.RespondJson(writer, http.StatusOK, product)
-	} else {
-		utils.RespondJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get product: %s", err))
-	}
-}
-
 func (controller *ProductsController) PostProduct(writer http.ResponseWriter, request *http.Request) {
-	productDto := &dto.ProductDto{}
-	if err := json.NewDecoder(request.Body).Decode(productDto); err != nil {
-		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse request body")
-		return
-	}
-
-	v := validator.New()
-	err := v.Struct(productDto)
-	if err != nil {
-		utils.RespondValidationErrors(writer, err.(validator.ValidationErrors))
+	productDto, ok := parseAndValidateProductDto(writer, request)
+	if !ok {
 		return
 	}
 
@@ -77,29 +48,81 @@ func (controller *ProductsController) PostProduct(writer http.ResponseWriter, re
 	}
 }
 
-func (controller *ProductsController) PutProduct(writer http.ResponseWriter, request *http.Request) {
-	productIdStr, found := mux.Vars(request)["id"]
+func (controller *ProductsController) GetProductBySku(writer http.ResponseWriter, request *http.Request) {
+	productSku, found := mux.Vars(request)["sku"]
 	if !found {
-		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not find product ID")
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not find product SKU")
 		return
 	}
 
-	productId, err := uuid.Parse(productIdStr)
-	if err != nil {
-		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse product ID")
+	product, err := controller.productsService.GetProductBySku(productSku)
+	if err == nil {
+		utils.RespondJson(writer, http.StatusOK, product)
+	} else {
+		utils.RespondJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get product: %s", err))
+	}
+}
+
+func (controller *ProductsController) PutProductBySku(writer http.ResponseWriter, request *http.Request) {
+	productSku, found := mux.Vars(request)["sku"]
+	if !found {
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not find product SKU")
 		return
 	}
 
-	productDto := &dto.ProductDto{}
-	if err := json.NewDecoder(request.Body).Decode(productDto); err != nil {
-		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse request body")
+	productDto, ok := parseAndValidateProductDto(writer, request)
+	if !ok {
 		return
 	}
 
-	v := validator.New()
-	err = v.Struct(productDto)
-	if err != nil {
-		utils.RespondValidationErrors(writer, err.(validator.ValidationErrors))
+	productDto.Sku = productSku
+	updatedProductDto, err := controller.productsService.UpdateProductBySku(productDto)
+	if err == nil {
+		utils.RespondJson(writer, http.StatusOK, updatedProductDto)
+	} else {
+		utils.RespondErrorJson(writer, http.StatusInternalServerError,
+			fmt.Sprintf("Could not update product: %s", err))
+	}
+}
+
+func (controller *ProductsController) DeleteProductBySku(writer http.ResponseWriter, request *http.Request) {
+	productSku, found := mux.Vars(request)["sku"]
+	if !found {
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not find product SKU")
+		return
+	}
+
+	err := controller.productsService.DeleteProductBySku(productSku)
+	if err == nil {
+		writer.WriteHeader(http.StatusOK)
+	} else {
+		utils.RespondErrorJson(writer, http.StatusInternalServerError,
+			fmt.Sprintf("Could not delete product: %s", err))
+	}
+}
+
+func (controller *ProductsController) GetProduct(writer http.ResponseWriter, request *http.Request) {
+	productId, parsed := tryParseProductId(writer, request)
+	if !parsed {
+		return
+	}
+
+	product, err := controller.productsService.GetProduct(productId)
+	if err == nil {
+		utils.RespondJson(writer, http.StatusOK, product)
+	} else {
+		utils.RespondJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get product: %s", err))
+	}
+}
+
+func (controller *ProductsController) PutProduct(writer http.ResponseWriter, request *http.Request) {
+	productId, parsed := tryParseProductId(writer, request)
+	if !parsed {
+		return
+	}
+
+	productDto, ok := parseAndValidateProductDto(writer, request)
+	if !ok {
 		return
 	}
 
@@ -113,14 +136,54 @@ func (controller *ProductsController) PutProduct(writer http.ResponseWriter, req
 	}
 }
 
-func (controller *ProductsController) DeleteProductById(writer http.ResponseWriter, request *http.Request) {
-	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
-}
+func (controller *ProductsController) DeleteProduct(writer http.ResponseWriter, request *http.Request) {
+	productId, parsed := tryParseProductId(writer, request)
+	if !parsed {
+		return
+	}
 
-func (controller *ProductsController) DeleteProductBySku(writer http.ResponseWriter, request *http.Request) {
-	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
+	err := controller.productsService.DeleteProduct(productId)
+	if err == nil {
+		writer.WriteHeader(http.StatusOK)
+	} else {
+		utils.RespondErrorJson(writer, http.StatusInternalServerError,
+			fmt.Sprintf("Could not delete product: %s", err))
+	}
 }
 
 func (controller *ProductsController) GetAllTypes(writer http.ResponseWriter, request *http.Request) {
 	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
+}
+
+func tryParseProductId(writer http.ResponseWriter, request *http.Request) (uuid.UUID, bool) {
+	productIdStr, found := mux.Vars(request)["id"]
+	if !found {
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not find product ID")
+		return uuid.UUID{}, false
+	}
+
+	productId, err := uuid.Parse(productIdStr)
+	if err != nil {
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse product ID")
+		return uuid.UUID{}, false
+	}
+
+	return productId, true
+}
+
+func parseAndValidateProductDto(writer http.ResponseWriter, request *http.Request) (*dto.ProductDto, bool) {
+	productDto := &dto.ProductDto{}
+	if err := json.NewDecoder(request.Body).Decode(productDto); err != nil {
+		utils.RespondErrorJson(writer, http.StatusBadRequest, "Could not parse request body")
+		return nil, false
+	}
+
+	v := validator.New()
+	err := v.Struct(productDto)
+	if err != nil {
+		utils.RespondValidationErrors(writer, err.(validator.ValidationErrors))
+		return nil, false
+	}
+
+	return productDto, true
 }

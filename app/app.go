@@ -36,10 +36,12 @@ func New(db *gorm.DB) (*App, error) {
 func (a *App) registerHandlers() {
 	a.Router.HandleFunc("/api/ping", controllers.GetPing)
 	a.Router.HandleFunc("/api/products", a.productsController.GetProducts).Methods("GET")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.GetProduct).Methods("GET")
 	a.Router.HandleFunc("/api/products", a.productsController.PostProduct).Methods("POST")
+	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.GetProductBySku).Methods("GET")
+	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.PutProductBySku).Methods("PUT")
+	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.DeleteProductBySku).Methods("DELETE")
+	a.Router.HandleFunc("/api/products/{id}", a.productsController.GetProduct).Methods("GET")
 	a.Router.HandleFunc("/api/products/{id}", a.productsController.PutProduct).Methods("PUT")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.DeleteProductById).Methods("DELETE")
-	a.Router.HandleFunc("/api/products", a.productsController.DeleteProductBySku).Methods("DELETE")
+	a.Router.HandleFunc("/api/products/{id}", a.productsController.DeleteProduct).Methods("DELETE")
 	a.Router.HandleFunc("/api/products/types", a.productsController.GetAllTypes).Methods("GET")
 }

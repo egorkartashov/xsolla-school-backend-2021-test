@@ -34,6 +34,15 @@ func (repo *ProductsRepo) GetProduct(id uuid.UUID) (*models.Product, error) {
 	return &product, nil
 }
 
+func (repo *ProductsRepo) GetProductBySku(sku string) (*models.Product, error) {
+	var product models.Product
+	if err := repo.db.Where("sku = ?", sku).First(&product).Error; err != nil {
+		return nil, err
+	}
+
+	return &product, nil
+}
+
 func (repo *ProductsRepo) CreateProduct(product *models.Product) (*models.Product, error) {
 	product.ID = uuid.New()
 	if err := repo.db.Create(product).Error; err != nil {
@@ -53,4 +62,30 @@ func (repo *ProductsRepo) UpdateProduct(product *models.Product) (*models.Produc
 	}
 
 	return product, nil
+}
+
+func (repo *ProductsRepo) UpdateProductBySku(product *models.Product) (*models.Product, error) {
+	currentProduct := models.Product{}
+	if err := repo.db.Where("sku = ?", product.Sku).First(&currentProduct).Error; err != nil {
+		return nil, err
+	}
+
+	product.ID = currentProduct.ID
+	if err := repo.db.Model(currentProduct).Updates(product).Error; err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (repo *ProductsRepo) DeleteProduct(productId uuid.UUID) error {
+	err := repo.db.Delete(&models.Product{}, productId).Error
+
+	return err
+}
+
+func (repo *ProductsRepo) DeleteProductBySku(sku string) error {
+	err := repo.db.Where("sku = ?", sku).Delete(&models.Product{}).Error
+
+	return err
 }
