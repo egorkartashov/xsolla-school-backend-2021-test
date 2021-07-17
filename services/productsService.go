@@ -1,10 +1,12 @@
 package services
 
 import (
+	"errors"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/database/models"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/dto"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/repos"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type ProductsService struct {
@@ -27,60 +29,65 @@ func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
 	}
 }
 
-func (service *ProductsService) GetProducts() (*[]dto.ProductDto, error) {
-	resultChan := make(chan productsListResult)
+func (service *ProductsService) GetProducts() (*[]dto.ProductDto, RequestResult) {
+	repoResultChan := make(chan productsListResult)
 	go func() {
 		products, err := service.productsRepo.GetProducts()
-		resultChan <- productsListResult{productsList: products, err: err}
+		repoResultChan <- productsListResult{productsList: products, err: err}
 	}()
 
-	result := <-resultChan
-	if result.err != nil {
-		return nil, result.err
+	repoResult := <-repoResultChan
+	requestResult := createRequestResult(repoResult.err)
+	if requestResult.Status != Success {
+		return nil, requestResult
 	}
 
 	var productsDtoList []dto.ProductDto
-	for _, product := range *result.productsList {
+	for _, product := range *repoResult.productsList {
 		productDto := mapModelToDto(&product)
 		productsDtoList = append(productsDtoList, *productDto)
 	}
 
-	return &productsDtoList, nil
+	return &productsDtoList, requestResult
 }
 
-func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, error) {
+func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, RequestResult) {
 	resultChan := make(chan singleProductResult)
 	go func() {
 		product, err := service.productsRepo.GetProduct(id)
 		resultChan <- singleProductResult{product: product, err: err}
 	}()
 
-	result := <-resultChan
-	if result.err != nil {
-		return nil, result.err
+	repoResult := <-resultChan
+
+	requestResult := createRequestResult(repoResult.err)
+	if requestResult.Status != Success {
+		return nil, requestResult
 	}
 
-	productDto := mapModelToDto(result.product)
-	return productDto, nil
+	productDto := mapModelToDto(repoResult.product)
+	return productDto, requestResult
 }
 
-func (service *ProductsService) GetProductBySku(sku string) (*dto.ProductDto, error) {
+func (service *ProductsService) GetProductBySku(sku string) (*dto.ProductDto, RequestResult) {
 	resultChan := make(chan singleProductResult)
 	go func() {
 		product, err := service.productsRepo.GetProductBySku(sku)
 		resultChan <- singleProductResult{product: product, err: err}
 	}()
 
-	result := <-resultChan
-	if result.err != nil {
-		return nil, result.err
+	repoResult := <-resultChan
+
+	requestResult := createRequestResult(repoResult.err)
+	if requestResult.Status != Success {
+		return nil, requestResult
 	}
 
-	productDto := mapModelToDto(result.product)
-	return productDto, nil
+	productDto := mapModelToDto(repoResult.product)
+	return productDto, requestResult
 }
 
-func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.ProductDto, error) {
+func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.ProductDto, RequestResult) {
 	product := mapDtoToModel(productDto)
 	resultChan := make(chan singleProductResult)
 	go func() {
@@ -89,15 +96,23 @@ func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.
 	}()
 
 	result := <-resultChan
-	if result.err != nil {
-		return nil, result.err
+
+	requestResult := createRequestResult(result.err)
+	if requestResult.Status != Success {
+		return nil, requestResult
 	}
 
 	createdProductDto := mapModelToDto(result.product)
-	return createdProductDto, nil
+	return createdProductDto, requestResult
 }
 
-func (service *ProductsService) UpdateProduct(productDto *dto.ProductDto) (*dto.ProductDto, error) {
+func (service *ProductsService) UpdateProduct(productDto *dto.ProductDto) (*dto.ProductDto, RequestResult) {
+	_, err := service.productsRepo.GetProduct(*productDto.Id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		requestResult := RequestResult{Status: NotFound}
+		return nil, requestResult
+	}
+
 	product := mapDtoToModel(productDto)
 	resultChan := make(chan singleProductResult)
 	go func() {
@@ -106,15 +121,17 @@ func (service *ProductsService) UpdateProduct(productDto *dto.ProductDto) (*dto.
 	}()
 
 	result := <-resultChan
-	if result.err != nil {
-		return nil, result.err
+
+	requestResult := createRequestResult(result.err)
+	if requestResult.Status != Success {
+		return nil, requestResult
 	}
 
 	updatedProductDto := mapModelToDto(result.product)
-	return updatedProductDto, nil
+	return updatedProductDto, requestResult
 }
 
-func (service *ProductsService) UpdateProductBySku(productDto *dto.ProductDto) (*dto.ProductDto, error) {
+func (service *ProductsService) UpdateProductBySku(productDto *dto.ProductDto) (*dto.ProductDto, RequestResult) {
 	product := mapDtoToModel(productDto)
 	resultChan := make(chan singleProductResult)
 	go func() {
@@ -123,15 +140,17 @@ func (service *ProductsService) UpdateProductBySku(productDto *dto.ProductDto) (
 	}()
 
 	result := <-resultChan
-	if result.err != nil {
-		return nil, result.err
+
+	requestResult := createRequestResult(result.err)
+	if requestResult.Status != Success {
+		return nil, requestResult
 	}
 
 	updatedProductDto := mapModelToDto(result.product)
-	return updatedProductDto, nil
+	return updatedProductDto, requestResult
 }
 
-func (service *ProductsService) DeleteProduct(productId uuid.UUID) error {
+func (service *ProductsService) DeleteProduct(productId uuid.UUID) RequestResult {
 	errorChan := make(chan error)
 	go func() {
 		err := service.productsRepo.DeleteProduct(productId)
@@ -139,10 +158,12 @@ func (service *ProductsService) DeleteProduct(productId uuid.UUID) error {
 	}()
 
 	err := <-errorChan
-	return err
+	requestResult := createRequestResult(err)
+
+	return requestResult
 }
 
-func (service *ProductsService) DeleteProductBySku(sku string) error {
+func (service *ProductsService) DeleteProductBySku(sku string) RequestResult {
 	errorChan := make(chan error)
 	go func() {
 		err := service.productsRepo.DeleteProductBySku(sku)
@@ -150,7 +171,9 @@ func (service *ProductsService) DeleteProductBySku(sku string) error {
 	}()
 
 	err := <-errorChan
-	return err
+	requestResult := createRequestResult(err)
+
+	return requestResult
 }
 
 func mapModelToDto(product *models.Product) *dto.ProductDto {
@@ -177,5 +200,21 @@ func mapDtoToModel(productDto *dto.ProductDto) *models.Product {
 		Name:         productDto.Name,
 		Type:         productDto.Type,
 		PriceInCents: productDto.PriceInCents,
+	}
+}
+
+func createRequestResult(err error) RequestResult {
+	requestResult := RequestResult{}
+	if err == nil {
+		requestResult.Status = Success
+		return requestResult
+	} else {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			requestResult.Status = NotFound
+		} else {
+			requestResult.Status = Error
+			requestResult.Error = err
+		}
+		return requestResult
 	}
 }

@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/dto"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/services"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/utils"
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"log"
 	"net/http"
 )
 
@@ -22,14 +22,16 @@ func NewProductsController(productsService *services.ProductsService) *ProductsC
 	}
 }
 
-func (controller *ProductsController) GetProducts(writer http.ResponseWriter, _ *http.Request) {
+func (controller *ProductsController) GetProducts(writer http.ResponseWriter, request *http.Request) {
 	// TODO pagination (offset, limit)
 
-	products, err := controller.productsService.GetProducts()
-	if err == nil {
+	products, requestResult := controller.productsService.GetProducts()
+	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusOK, products)
+	} else if requestResult.Status == services.NotFound {
+		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.RespondErrorJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get products: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -39,12 +41,11 @@ func (controller *ProductsController) PostProduct(writer http.ResponseWriter, re
 		return
 	}
 
-	createdProductDto, err := controller.productsService.CreateProduct(productDto)
-	if err == nil {
+	createdProductDto, requestResult := controller.productsService.CreateProduct(productDto)
+	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusCreated, createdProductDto)
 	} else {
-		utils.RespondErrorJson(writer, http.StatusInternalServerError,
-			fmt.Sprintf("Could not create product: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -55,11 +56,13 @@ func (controller *ProductsController) GetProductBySku(writer http.ResponseWriter
 		return
 	}
 
-	product, err := controller.productsService.GetProductBySku(productSku)
-	if err == nil {
+	product, requestResult := controller.productsService.GetProductBySku(productSku)
+	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusOK, product)
+	} else if requestResult.Status == services.NotFound {
+		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.RespondJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get product: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -76,12 +79,13 @@ func (controller *ProductsController) PutProductBySku(writer http.ResponseWriter
 	}
 
 	productDto.Sku = productSku
-	updatedProductDto, err := controller.productsService.UpdateProductBySku(productDto)
-	if err == nil {
+	updatedProductDto, requestResult := controller.productsService.UpdateProductBySku(productDto)
+	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusOK, updatedProductDto)
+	} else if requestResult.Status == services.NotFound {
+		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.RespondErrorJson(writer, http.StatusInternalServerError,
-			fmt.Sprintf("Could not update product: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -92,12 +96,14 @@ func (controller *ProductsController) DeleteProductBySku(writer http.ResponseWri
 		return
 	}
 
-	err := controller.productsService.DeleteProductBySku(productSku)
-	if err == nil {
-		writer.WriteHeader(http.StatusOK)
+	requestResult := controller.productsService.DeleteProductBySku(productSku)
+
+	if requestResult.Status == services.Success {
+		writer.WriteHeader(http.StatusNoContent)
+	} else if requestResult.Status == services.NotFound {
+		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.RespondErrorJson(writer, http.StatusInternalServerError,
-			fmt.Sprintf("Could not delete product: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -107,11 +113,13 @@ func (controller *ProductsController) GetProduct(writer http.ResponseWriter, req
 		return
 	}
 
-	product, err := controller.productsService.GetProduct(productId)
-	if err == nil {
+	product, requestResult := controller.productsService.GetProduct(productId)
+	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusOK, product)
+	} else if requestResult.Status == services.NotFound {
+		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.RespondJson(writer, http.StatusNotFound, fmt.Sprintf("Could not get product: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -127,12 +135,13 @@ func (controller *ProductsController) PutProduct(writer http.ResponseWriter, req
 	}
 
 	productDto.Id = &productId
-	updatedProductDto, err := controller.productsService.UpdateProduct(productDto)
-	if err == nil {
+	updatedProductDto, requestResult := controller.productsService.UpdateProduct(productDto)
+	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusOK, updatedProductDto)
+	} else if requestResult.Status == services.NotFound {
+		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.RespondErrorJson(writer, http.StatusInternalServerError,
-			fmt.Sprintf("Could not update product: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -142,12 +151,13 @@ func (controller *ProductsController) DeleteProduct(writer http.ResponseWriter, 
 		return
 	}
 
-	err := controller.productsService.DeleteProduct(productId)
-	if err == nil {
-		writer.WriteHeader(http.StatusOK)
+	requestResult := controller.productsService.DeleteProduct(productId)
+	if requestResult.Status == services.Success {
+		writer.WriteHeader(http.StatusNoContent)
+	} else if requestResult.Status == services.NotFound {
+		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		utils.RespondErrorJson(writer, http.StatusInternalServerError,
-			fmt.Sprintf("Could not delete product: %s", err))
+		handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -186,4 +196,10 @@ func parseAndValidateProductDto(writer http.ResponseWriter, request *http.Reques
 	}
 
 	return productDto, true
+}
+
+func handleUnknownError(writer http.ResponseWriter, request *http.Request, requestResult services.RequestResult) {
+	route, _ := mux.CurrentRoute(request).GetPathTemplate()
+	log.Printf("Error in %s: status = %s, error = %s", route, requestResult.Status, requestResult.Error)
+	writer.WriteHeader(http.StatusInternalServerError)
 }
