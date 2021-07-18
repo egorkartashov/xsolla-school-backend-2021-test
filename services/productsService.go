@@ -29,26 +29,26 @@ func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
 	}
 }
 
-func (service *ProductsService) GetProducts() (*[]dto.ProductDto, RequestResult) {
+func (service *ProductsService) GetProducts(offset, limit int) ([]dto.ProductDto, RequestResult) {
 	repoResultChan := make(chan productsListResult)
 	go func() {
-		products, err := service.productsRepo.GetProducts()
+		products, err := service.productsRepo.GetProducts(offset, limit)
 		repoResultChan <- productsListResult{productsList: products, err: err}
 	}()
 
 	repoResult := <-repoResultChan
 	requestResult := createRequestResult(repoResult.err)
+	var productsDtoList = make([]dto.ProductDto, 0)
 	if requestResult.Status != Success {
-		return nil, requestResult
+		return productsDtoList, requestResult
 	}
 
-	var productsDtoList []dto.ProductDto
 	for _, product := range *repoResult.productsList {
 		productDto := mapModelToDto(&product)
 		productsDtoList = append(productsDtoList, *productDto)
 	}
 
-	return &productsDtoList, requestResult
+	return productsDtoList, requestResult
 }
 
 func (service *ProductsService) GetProduct(id uuid.UUID) (*dto.ProductDto, RequestResult) {

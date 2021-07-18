@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/dto"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/services"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/utils"
@@ -22,12 +23,39 @@ func NewProductsController(productsService *services.ProductsService) *ProductsC
 	}
 }
 
-func (controller *ProductsController) GetProducts(writer http.ResponseWriter, request *http.Request) {
-	// TODO pagination (offset, limit)
+const (
+	offsetParamKey     = "offset"
+	limitParamKey      = "limit"
+	defaultOffsetValue = 0
+	defaultLimitValue  = 100
+)
 
-	products, requestResult := controller.productsService.GetProducts()
+func (controller *ProductsController) GetProducts(writer http.ResponseWriter, request *http.Request) {
+	var offset, limit int
+	var ok bool
+
+	if offset, ok = utils.TryParseIntQueryParameterOrDefault(request, offsetParamKey, defaultOffsetValue); !ok {
+		utils.RespondErrorJson(writer, http.StatusBadRequest,
+			fmt.Sprintf("Could not parse \"%s\" query parameter", offsetParamKey))
+		return
+	}
+
+	if limit, ok = utils.TryParseIntQueryParameterOrDefault(request, limitParamKey, defaultLimitValue); !ok {
+		utils.RespondErrorJson(writer, http.StatusBadRequest,
+			fmt.Sprintf("Could not parse \"%s\" query parameter", limitParamKey))
+		return
+	}
+
+	products, requestResult := controller.productsService.GetProducts(offset, limit)
 	if requestResult.Status == services.Success {
-		utils.RespondJson(writer, http.StatusOK, products)
+		size := len(products)
+		pagination := dto.CreatePaginationWithLinks(request.URL.Path, offset, limit, size)
+
+		paginatedProductsDto := dto.PaginatedProductsDto{
+			Pagination: pagination,
+			Data:       products,
+		}
+		utils.RespondJson(writer, http.StatusOK, paginatedProductsDto)
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {

@@ -16,9 +16,9 @@ func NewProductsRepo(db *gorm.DB) *ProductsRepo {
 	}
 }
 
-func (repo *ProductsRepo) GetProducts() (*[]models.Product, error) {
+func (repo *ProductsRepo) GetProducts(offset, limit int) (*[]models.Product, error) {
 	var products []models.Product
-	if err := repo.db.Find(&products).Error; err != nil {
+	if err := repo.db.Offset(offset).Limit(limit).Find(&products).Error; err != nil {
 		return nil, err
 	}
 

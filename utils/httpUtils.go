@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -27,4 +28,20 @@ func RespondValidationErrors(writer http.ResponseWriter, errors validator.Valida
 		builder.WriteString(fmt.Sprintf("%s\n", e))
 	}
 	RespondErrorJson(writer, http.StatusBadRequest, builder.String())
+}
+
+func TryParseIntQueryParameterOrDefault(request *http.Request, paramKey string, defaultValue int) (int, bool) {
+	var paramValue = defaultValue
+	var err error
+	paramValueStr := request.URL.Query().Get(paramKey)
+
+	if paramValueStr != "" {
+		if paramValue, err = strconv.Atoi(paramValueStr); err == nil {
+			return paramValue, true
+		}
+
+		return 0, false
+	}
+
+	return paramValue, true
 }
