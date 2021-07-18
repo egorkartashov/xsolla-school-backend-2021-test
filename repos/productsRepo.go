@@ -79,13 +79,13 @@ func (repo *ProductsRepo) UpdateProductBySku(product *models.Product) (*models.P
 }
 
 func (repo *ProductsRepo) DeleteProduct(productId uuid.UUID) error {
-	err := repo.db.Delete(&models.Product{}, productId).Error
+	err := repo.db.Unscoped().Delete(&models.Product{}, productId).Error
 
 	return err
 }
 
 func (repo *ProductsRepo) DeleteProductBySku(sku string) error {
-	err := repo.db.Where("sku = ?", sku).Delete(&models.Product{}).Error
+	err := repo.db.Unscoped().Where("sku = ?", sku).Delete(&models.Product{}).Error
 
 	return err
 }
