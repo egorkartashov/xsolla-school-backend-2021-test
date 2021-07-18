@@ -89,3 +89,13 @@ func (repo *ProductsRepo) DeleteProductBySku(sku string) error {
 
 	return err
 }
+
+func (repo *ProductsRepo) GetAllTypes() ([]string, error) {
+	var products []models.Product
+	var types = make([]string, 0)
+	if err := repo.db.Model(&products).Distinct().Pluck("type", &types).Error; err != nil {
+		return types, err
+	}
+
+	return types, nil
+}

@@ -176,6 +176,22 @@ func (service *ProductsService) DeleteProductBySku(sku string) RequestResult {
 	return requestResult
 }
 
+func (service *ProductsService) GetAllTypes() ([]string, RequestResult) {
+	errorChan := make(chan error)
+	typesChan := make(chan []string)
+	go func() {
+		types, err := service.productsRepo.GetAllTypes()
+		errorChan <- err
+		typesChan <- types
+	}()
+
+	err := <-errorChan
+	types := <-typesChan
+	requestResult := createRequestResult(err)
+
+	return types, requestResult
+}
+
 func mapModelToDto(product *models.Product) *dto.ProductDto {
 	return &dto.ProductDto{
 		Id:           &product.ID,

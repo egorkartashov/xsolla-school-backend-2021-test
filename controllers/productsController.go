@@ -190,7 +190,12 @@ func (controller *ProductsController) DeleteProduct(writer http.ResponseWriter, 
 }
 
 func (controller *ProductsController) GetAllTypes(writer http.ResponseWriter, request *http.Request) {
-	utils.RespondErrorJson(writer, http.StatusInternalServerError, "Endpoint not implemented yet")
+	types, requestResult := controller.productsService.GetAllTypes()
+	if requestResult.Status == services.Success {
+		utils.RespondJson(writer, http.StatusOK, types)
+	} else {
+		handleUnknownError(writer, request, requestResult)
+	}
 }
 
 func tryParseProductId(writer http.ResponseWriter, request *http.Request) (uuid.UUID, bool) {
