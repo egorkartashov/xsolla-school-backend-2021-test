@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/database/models"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/dto"
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/filters"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/repos"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -29,10 +30,10 @@ func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
 	}
 }
 
-func (service *ProductsService) GetProducts(offset, limit int) ([]dto.ProductDto, RequestResult) {
+func (service *ProductsService) GetProducts(filters []filters.FilterPair, offset, limit int) ([]dto.ProductDto, RequestResult) {
 	repoResultChan := make(chan productsListResult)
 	go func() {
-		products, err := service.productsRepo.GetProducts(offset, limit)
+		products, err := service.productsRepo.GetProducts(filters, offset, limit)
 		repoResultChan <- productsListResult{productsList: products, err: err}
 	}()
 

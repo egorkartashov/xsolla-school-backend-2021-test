@@ -45,3 +45,19 @@ func TryParseIntQueryParameterOrDefault(request *http.Request, paramKey string, 
 
 	return paramValue, true
 }
+
+func TryParseIntQueryParameterOrNil(request *http.Request, paramKey string) (*int, error) {
+	var paramValue int
+	var err error
+	paramValueStr := request.URL.Query().Get(paramKey)
+
+	if paramValueStr != "" {
+		if paramValue, err = strconv.Atoi(paramValueStr); err == nil {
+			return &paramValue, nil
+		}
+
+		return nil, err
+	}
+
+	return nil, nil
+}

@@ -2,6 +2,7 @@ package repos
 
 import (
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/database/models"
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/filters"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -16,9 +17,17 @@ func NewProductsRepo(db *gorm.DB) *ProductsRepo {
 	}
 }
 
-func (repo *ProductsRepo) GetProducts(offset, limit int) (*[]models.Product, error) {
+func (repo *ProductsRepo) GetProducts(filters []filters.FilterPair, offset, limit int) (*[]models.Product, error) {
 	var products []models.Product
-	if err := repo.db.Offset(offset).Limit(limit).Find(&products).Error; err != nil {
+	var err error
+	var db = repo.db.Debug()
+	for _, filter := range filters {
+		db = db.Where(filter.ConditionString, filter.Values...)
+	}
+
+	err = db.Offset(offset).Limit(limit).Find(&products).Error
+
+	if err != nil {
 		return nil, err
 	}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/dto"
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/filters"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/services"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/utils"
 	"github.com/go-playground/validator"
@@ -24,10 +25,13 @@ func NewProductsController(productsService *services.ProductsService) *ProductsC
 }
 
 const (
-	offsetParamKey     = "offset"
-	limitParamKey      = "limit"
-	defaultOffsetValue = 0
-	defaultLimitValue  = 100
+	offsetParamKey      = "offset"
+	limitParamKey       = "limit"
+	productTypeParamKey = "type"
+	minPriceParamKey    = "min_price"
+	maxPriceParamKey    = "max_price"
+	defaultOffsetValue  = 0
+	defaultLimitValue   = 100
 )
 
 func (controller *ProductsController) GetProducts(writer http.ResponseWriter, request *http.Request) {
@@ -46,7 +50,30 @@ func (controller *ProductsController) GetProducts(writer http.ResponseWriter, re
 		return
 	}
 
-	products, requestResult := controller.productsService.GetProducts(offset, limit)
+	var minPrice, maxPrice *int
+	var productType *string
+	var err error
+
+	var productTypeStr = request.URL.Query().Get(productTypeParamKey)
+	if productTypeStr != "" {
+		productType = &productTypeStr
+	}
+
+	if minPrice, err = utils.TryParseIntQueryParameterOrNil(request, minPriceParamKey); err != nil {
+		utils.RespondErrorJson(writer, http.StatusBadRequest,
+			fmt.Sprintf("Could not parse \"%s\" query parameter", minPriceParamKey))
+		return
+	}
+
+	if maxPrice, err = utils.TryParseIntQueryParameterOrNil(request, maxPriceParamKey); err != nil {
+		utils.RespondErrorJson(writer, http.StatusBadRequest,
+			fmt.Sprintf("Could not parse \"%s\" query parameter", maxPriceParamKey))
+		return
+	}
+
+	productsFilterString := filters.BuildProductsFilters(productType, minPrice, maxPrice)
+
+	products, requestResult := controller.productsService.GetProducts(productsFilterString, offset, limit)
 	if requestResult.Status == services.Success {
 		size := len(products)
 		pagination := dto.CreatePaginationWithLinks(request.URL.Path, offset, limit, size)
