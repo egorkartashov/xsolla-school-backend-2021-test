@@ -3,31 +3,31 @@ package main
 import (
 	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/app"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
 	"os"
 )
 
+const (
+	postgresHostEnvKey     = "POSTGRES_HOST"
+	postgresDbEnvKey       = "POSTGRES_DB"
+	postgresUsernameEnvKey = "POSTGRES_USERNAME"
+	postgresPasswordEnvKey = "POSTGRES_PASSWORD"
+)
+
 func main() {
 
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Print(err)
-	}
-
-	dbHost := os.Getenv("POSTGRES_HOST")
-	dbName := os.Getenv("POSTGRES_DB")
-	dbUsername := os.Getenv("POSTGRES_USER")
-	dbPassword := os.Getenv("POSTGRES_PASSWORD")
+	dbHost := os.Getenv(postgresHostEnvKey)
+	dbName := os.Getenv(postgresDbEnvKey)
+	dbUsername := os.Getenv(postgresUsernameEnvKey)
+	dbPassword := os.Getenv(postgresPasswordEnvKey)
 	host := fmt.Sprintf("host=%s user=%s password=%s dbname=%s", dbHost, dbUsername, dbPassword, dbName)
+
 	db, err := gorm.Open(postgres.Open(host), &gorm.Config{})
 	if err != nil {
 		panic(fmt.Sprintf("Failed to connect to database: %s\n", err.Error()))
 	}
-
-	fmt.Println("Hello, world.")
 
 	appInstance, err := app.New(db)
 	if err != nil {
