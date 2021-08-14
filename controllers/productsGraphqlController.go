@@ -1,22 +1,24 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/graphql-api"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/services"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/utils"
 	"github.com/google/uuid"
 	"github.com/graphql-go/graphql"
+	"log"
 	"net/http"
 )
 
 type ProductsGraphqlController struct {
 	productsService *services.ProductsService
+	schema          graphql.Schema
 }
 
 func NewProductsGraphqlController(productsService *services.ProductsService) *ProductsGraphqlController {
 	return &ProductsGraphqlController{
 		productsService: productsService,
+		schema:          CreateProductGraphqlSchema(productsService),
 	}
 }
 
@@ -65,7 +67,7 @@ func CreateProductGraphqlSchema(productsService *services.ProductsService) graph
 					return nil, nil // TODO return error message
 				},
 			},
-			"list": &graphql.Field{
+			"productsList": &graphql.Field{
 				Type:        graphql.NewList(productType),
 				Description: "Get products list",
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
@@ -107,14 +109,13 @@ func CreateProductGraphqlSchema(productsService *services.ProductsService) graph
 
 func (controller *ProductsGraphqlController) HandleQuery(w http.ResponseWriter, r *http.Request) {
 	queryString := r.URL.Query().Get("query")
-	schema := CreateProductGraphqlSchema(controller.productsService)
 	result := graphql.Do(graphql.Params{
-		Schema:        schema,
+		Schema:        controller.schema,
 		RequestString: queryString,
 	})
 
 	if len(result.Errors) > 0 {
-		fmt.Printf("errors: %v", result.Errors)
+		log.Printf("errors: %v", result.Errors)
 		utils.RespondErrorJson(w, http.StatusInternalServerError, "Error during /products GraphQL query")
 		return
 	}
