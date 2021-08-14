@@ -39,14 +39,13 @@ func (service *ProductsService) GetProducts(offset, limit int, filters *[]filter
 
 	repoResult := <-repoResultChan
 	requestResult := createRequestResult(repoResult.err)
-	var productsDtoList = make([]dto.ProductDto, 0)
 	if requestResult.Status != Success {
-		return productsDtoList, requestResult
+		return make([]dto.ProductDto, 0), requestResult
 	}
 
-	for _, product := range *repoResult.productsList {
-		productDto := mapModelToDto(&product)
-		productsDtoList = append(productsDtoList, *productDto)
+	var productsDtoList = make([]dto.ProductDto, len(*repoResult.productsList))
+	for i, product := range *repoResult.productsList {
+		productsDtoList[i] = *mapModelToDto(&product)
 	}
 
 	return productsDtoList, requestResult
@@ -194,8 +193,9 @@ func (service *ProductsService) GetAllTypes() ([]string, RequestResult) {
 }
 
 func mapModelToDto(product *models.Product) *dto.ProductDto {
+	productId := product.ID
 	return &dto.ProductDto{
-		Id:           &product.ID,
+		Id:           &productId,
 		Sku:          product.Sku,
 		Name:         product.Name,
 		Type:         product.Type,
