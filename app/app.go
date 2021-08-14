@@ -10,8 +10,9 @@ import (
 )
 
 type App struct {
-	Router             *mux.Router
-	productsController *controllers.ProductsController
+	Router                    *mux.Router
+	productsController        *controllers.ProductsController
+	productsGraphqlController *controllers.ProductsGraphqlController
 }
 
 func New(db *gorm.DB) (*App, error) {
@@ -24,8 +25,9 @@ func New(db *gorm.DB) (*App, error) {
 	productsService := services.NewProductsService(productsRepo)
 
 	a := &App{
-		Router:             mux.NewRouter(),
-		productsController: controllers.NewProductsController(productsService),
+		Router:                    mux.NewRouter(),
+		productsController:        controllers.NewProductsController(productsService),
+		productsGraphqlController: controllers.NewProductsGraphqlController(productsService),
 	}
 
 	a.registerHandlers()
@@ -34,14 +36,15 @@ func New(db *gorm.DB) (*App, error) {
 }
 
 func (a *App) registerHandlers() {
-	a.Router.HandleFunc("/api/ping", controllers.GetPing)
-	a.Router.HandleFunc("/api/products/types", a.productsController.GetAllTypes).Methods("GET")
-	a.Router.HandleFunc("/api/products", a.productsController.GetProducts).Methods("GET")
-	a.Router.HandleFunc("/api/products", a.productsController.PostProduct).Methods("POST")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.GetProductBySku).Methods("GET")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.PutProductBySku).Methods("PUT")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.DeleteProductBySku).Methods("DELETE")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.GetProduct).Methods("GET")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.PutProduct).Methods("PUT")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.DeleteProduct).Methods("DELETE")
+	a.Router.Path("/graphql-api/products").Queries("query").HandlerFunc(a.productsGraphqlController.HandleQuery)
+	a.Router.HandleFunc("/graphql-api/ping", controllers.GetPing)
+	a.Router.HandleFunc("/graphql-api/products/types", a.productsController.GetAllTypes).Methods("GET")
+	a.Router.HandleFunc("/graphql-api/products", a.productsController.GetProducts).Methods("GET")
+	a.Router.HandleFunc("/graphql-api/products", a.productsController.PostProduct).Methods("POST")
+	a.Router.HandleFunc("/graphql-api/products/sku={sku}", a.productsController.GetProductBySku).Methods("GET")
+	a.Router.HandleFunc("/graphql-api/products/sku={sku}", a.productsController.PutProductBySku).Methods("PUT")
+	a.Router.HandleFunc("/graphql-api/products/sku={sku}", a.productsController.DeleteProductBySku).Methods("DELETE")
+	a.Router.HandleFunc("/graphql-api/products/{id}", a.productsController.GetProduct).Methods("GET")
+	a.Router.HandleFunc("/graphql-api/products/{id}", a.productsController.PutProduct).Methods("PUT")
+	a.Router.HandleFunc("/graphql-api/products/{id}", a.productsController.DeleteProduct).Methods("DELETE")
 }

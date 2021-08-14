@@ -1,6 +1,8 @@
-package api
+package graphql_api
 
-import "github.com/graphql-go/graphql"
+import (
+	"github.com/graphql-go/graphql"
+)
 
 var productType = graphql.NewObject(
 	graphql.ObjectConfig{
@@ -24,3 +26,7 @@ var productType = graphql.NewObject(
 		},
 	},
 )
+
+func GetProductType() *graphql.Object {
+	return productType
+}

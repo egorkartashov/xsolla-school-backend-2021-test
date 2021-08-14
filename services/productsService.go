@@ -30,7 +30,7 @@ func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
 	}
 }
 
-func (service *ProductsService) GetProducts(filters []filters.FilterPair, offset, limit int) ([]dto.ProductDto, RequestResult) {
+func (service *ProductsService) GetProducts(offset, limit int, filters *[]filters.FilterPair) ([]dto.ProductDto, RequestResult) {
 	repoResultChan := make(chan productsListResult)
 	go func() {
 		products, err := service.productsRepo.GetProducts(filters, offset, limit)

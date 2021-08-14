@@ -73,7 +73,7 @@ func (controller *ProductsController) GetProducts(writer http.ResponseWriter, re
 
 	productsFilterString := filters.BuildProductsFilters(productType, minPrice, maxPrice)
 
-	products, requestResult := controller.productsService.GetProducts(productsFilterString, offset, limit)
+	products, requestResult := controller.productsService.GetProducts(offset, limit, &productsFilterString)
 	if requestResult.Status == services.Success {
 		size := len(products)
 		pagination := dto.CreatePaginationWithLinks(request.URL.Path, offset, limit, size)
