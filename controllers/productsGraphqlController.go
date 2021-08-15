@@ -277,9 +277,9 @@ func (queryResolver ProductsGraphqlQueryResolver) updateProductById(params graph
 		productToUpdate.Type = productType
 	}
 
-	priceInCents, priceChanged := params.Args["priceInCents"].(int32)
+	priceInCents, priceChanged := params.Args["priceInCents"].(int)
 	if priceChanged {
-		productToUpdate.PriceInCents = priceInCents
+		productToUpdate.PriceInCents = int32(priceInCents)
 	}
 
 	updatedProduct, requestResult := queryResolver.productsService.UpdateProduct(productToUpdate)
@@ -304,9 +304,9 @@ func (queryResolver ProductsGraphqlQueryResolver) updateProductBySku(params grap
 		productToUpdate.Type = productType
 	}
 
-	priceInCents, priceChanged := params.Args["priceInCents"].(int32)
+	priceInCents, priceChanged := params.Args["priceInCents"].(int)
 	if priceChanged {
-		productToUpdate.PriceInCents = priceInCents
+		productToUpdate.PriceInCents = int32(priceInCents)
 	}
 
 	updatedProduct, requestResult := queryResolver.productsService.UpdateProduct(productToUpdate)
