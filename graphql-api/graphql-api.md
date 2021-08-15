@@ -25,10 +25,10 @@
 
 ### Запросы на получение данных (Query)
 
-`product(id*: <>){...}`
+`product(id*: ""){...}`
 Получить продукт по его идентификатору
 
-`productBySku(sku*: <>){...}`
+`productBySku(sku*: ""){...}`
 Получить продукт по его SKU
 
 `productsList(offset: 0, limit: 10){...}`

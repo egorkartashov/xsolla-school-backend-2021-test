@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/dto"
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/filters"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/graphql-api"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/services"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/utils"
@@ -227,7 +228,8 @@ func (queryResolver ProductsGraphqlQueryResolver) getProductsList(params graphql
 
 	log.Printf("%v, %v", offset, limit)
 
-	products, requestResult := queryResolver.productsService.GetProducts(offset, limit, nil)
+	var noFilters *[]filters.FilterPair = nil
+	products, requestResult := queryResolver.productsService.GetProducts(noFilters, offset, limit)
 	if requestResult.Status == services.Success {
 		return products, nil
 	} else {
