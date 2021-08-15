@@ -17,14 +17,12 @@ func NewProductsRepo(db *gorm.DB) *ProductsRepo {
 	}
 }
 
-func (repo *ProductsRepo) GetProducts(filters *[]filters.FilterPair, offset, limit int) (*[]models.Product, error) {
+func (repo *ProductsRepo) GetProducts(filters []filters.FilterPair, offset, limit int) (*[]models.Product, error) {
 	var products []models.Product
 	var err error
 	var db = repo.db.Debug()
-	if filters != nil {
-		for _, filter := range *filters {
-			db = db.Where(filter.ConditionString, filter.Values...)
-		}
+	for _, filter := range filters {
+		db = db.Where(filter.ConditionString, filter.Values...)
 	}
 
 	err = db.Offset(offset).Limit(limit).Find(&products).Error

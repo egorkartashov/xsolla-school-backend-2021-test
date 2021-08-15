@@ -228,7 +228,7 @@ func (queryResolver ProductsGraphqlQueryResolver) getProductsList(params graphql
 
 	log.Printf("%v, %v", offset, limit)
 
-	var noFilters *[]filters.FilterPair = nil
+	var noFilters = make([]filters.FilterPair, 0)
 	products, requestResult := queryResolver.productsService.GetProducts(noFilters, offset, limit)
 	if requestResult.Status == services.Success {
 		return products, nil
