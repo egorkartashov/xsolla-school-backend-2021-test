@@ -104,16 +104,16 @@ func CreateProductGraphqlSchema(queryResolver ProductsGraphqlQueryResolver) grap
 						Type: graphql.NewNonNull(graphql.String),
 					},
 					"sku": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
+						Type: graphql.String,
 					},
 					"name": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
+						Type: graphql.String,
 					},
 					"type": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
+						Type: graphql.String,
 					},
 					"priceInCents": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Int),
+						Type: graphql.Int,
 					},
 				},
 				Resolve: queryResolver.updateProductById,
@@ -126,13 +126,13 @@ func CreateProductGraphqlSchema(queryResolver ProductsGraphqlQueryResolver) grap
 						Type: graphql.NewNonNull(graphql.String),
 					},
 					"name": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
+						Type: graphql.String,
 					},
 					"type": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
+						Type: graphql.String,
 					},
 					"priceInCents": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.Int),
+						Type: graphql.Int,
 					},
 				},
 				Resolve: queryResolver.updateProductBySku,
