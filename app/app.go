@@ -12,6 +12,7 @@ import (
 type App struct {
 	Router             *mux.Router
 	productsController *controllers.ProductsController
+	loginController    *controllers.LoginController
 }
 
 func New(db *gorm.DB) (*App, error) {
@@ -26,6 +27,7 @@ func New(db *gorm.DB) (*App, error) {
 	a := &App{
 		Router:             mux.NewRouter(),
 		productsController: controllers.NewProductsController(productsService),
+		loginController:    controllers.NewLoginController(),
 	}
 
 	a.registerHandlers()
@@ -44,4 +46,6 @@ func (a *App) registerHandlers() {
 	a.Router.HandleFunc("/api/products/{id}", a.productsController.GetProduct).Methods("GET")
 	a.Router.HandleFunc("/api/products/{id}", a.productsController.PutProduct).Methods("PUT")
 	a.Router.HandleFunc("/api/products/{id}", a.productsController.DeleteProduct).Methods("DELETE")
+	a.Router.HandleFunc("/api/server-login", a.loginController.PostServerLogin).Methods("POST")
+	a.Router.HandleFunc("/api/client-login", a.loginController.GetClientLogin).Methods("GET")
 }
