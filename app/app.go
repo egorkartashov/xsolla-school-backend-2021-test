@@ -26,7 +26,8 @@ func New(db *gorm.DB, logger *log.Entry) (*App, error) {
 	}
 
 	var productsRepo repos.ProductsRepoInterface = repos.NewProductsRepo(db)
-	productsService := services.NewProductsService(productsRepo)
+	messageBrokerService := services.NewMessageBrokerService()
+	productsService := services.NewProductsService(productsRepo, messageBrokerService)
 
 	a := &App{
 		Router:                    mux.NewRouter(),

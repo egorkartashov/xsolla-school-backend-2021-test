@@ -10,4 +10,5 @@ type ProductDto struct {
 	Name         string     `json:"name" validate:"required"`
 	Type         string     `json:"type" validate:"required"`
 	PriceInCents int32      `json:"priceInCents" validate:"required,gte=0"`
+	LandingUrl   string     `json:"landingUrl,omitempty" validate:"omitempty,url"`
 }
