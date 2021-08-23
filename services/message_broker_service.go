@@ -53,7 +53,7 @@ func (broker *MessageBrokerService) SendUrlForCheck(url string) {
 
 	q, err := ch.QueueDeclare(
 		checkUrlQueueName,
-		false,
+		true,
 		false,
 		false,
 		false,
@@ -64,14 +64,12 @@ func (broker *MessageBrokerService) SendUrlForCheck(url string) {
 		return
 	}
 
-	headers := map[string]interface{}{
-		"ttl": checkAttemptsMaxCount,
-	}
-
 	err = ch.Publish("", q.Name, false, false, amqp.Publishing{
 		ContentType: "text/plain",
 		Body:        []byte(url),
-		Headers:     headers,
+		Headers: amqp.Table{
+			"ttl": checkAttemptsMaxCount,
+		},
 	})
 
 	if err != nil {
