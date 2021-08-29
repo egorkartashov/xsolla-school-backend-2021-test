@@ -10,6 +10,8 @@ services:
     - 8000:8000
     links:
       - products-db
+    volumes:
+      - ./applogs:/app/applogs
     environment:
       - PORT=${PORT:-8000}
       - POSTGRES_HOST=${POSTGRES_HOST:-products-db}
@@ -37,3 +39,45 @@ services:
     environment:
       - PGADMIN_DEFAULT_EMAIL=user@domain.com
       - PGADMIN_DEFAULT_PASSWORD=1q2w3e
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.14.0
+    container_name: products-api-elasticsearch
+    volumes:
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    healthcheck:
+      test: [ "CMD", "curl", "-s", "-f", "http://localhost:9200/_cat/health" ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    ports:
+      - 9200:9200
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.14.0
+    container_name: products-api-logstash
+    volumes:
+      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.14.0
+    container_name: products-api-filebeat
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./config/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./logs/:/logs/
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.14.0
+    container_name: products-api-kibana
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-s", "-f", "http://localhost:5601/api/status" ]
+      interval: 3s
+      timeout: 3s
+      retries: 50
+    ports:
+      - 5601:5601
