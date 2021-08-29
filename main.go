@@ -61,13 +61,10 @@ func configureLogger() *log.Entry {
 
 	defaultLogger := log.WithFields(standardFields)
 
-	f, err := os.OpenFile("applogs/errors", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("applogs/errors.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		defaultLogger.Fatalf("Error opening file for logs: %s", err)
 	}
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(f)
 
 	log.SetOutput(f)
 
