@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/controllers"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/database/models"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/repos"
@@ -65,8 +64,7 @@ func (a *App) logApiRequestMW(next http.Handler) http.Handler {
 			"timestampUtc": time.Now().UTC(),
 		}
 
-		logMessage := fmt.Sprintf("REST API request")
-		a.logger.WithFields(log.Fields{"httpRequestInfo": httpRequestInfo}).Info(logMessage)
+		a.logger.WithFields(log.Fields{"httpRequestInfo": httpRequestInfo}).Info("REST API request")
 
 		next.ServeHTTP(w, r)
 	})
