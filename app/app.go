@@ -42,7 +42,7 @@ func New(db *gorm.DB, logger *log.Entry) (*App, error) {
 func (a *App) registerHandlers() {
 	a.Router.HandleFunc("/api/ping", controllers.GetPing)
 
-	productsRouter := a.Router.PathPrefix("/api").Subrouter()
+	productsRouter := a.Router.PathPrefix("/api/products").Subrouter()
 	productsRouter.Use(a.logApiRequestMW)
 
 	productsRouter.HandleFunc("/types", a.productsController.GetAllTypes).Methods("GET")
