@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/caching"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/controllers"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/database/models"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/repos"
@@ -21,6 +22,7 @@ func New(db *gorm.DB) (*App, error) {
 	}
 
 	var productsRepo repos.ProductsRepoInterface = repos.NewProductsRepo(db)
+	productsRepo = caching.NewProductsRepoWithCaching(productsRepo)
 	productsService := services.NewProductsService(productsRepo)
 
 	a := &App{
