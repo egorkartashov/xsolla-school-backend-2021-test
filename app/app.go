@@ -1,20 +1,25 @@
 package app
 
 import (
+	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/controllers"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/database/models"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/repos"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/services"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"net/http"
+	"time"
 )
 
 type App struct {
 	Router             *mux.Router
 	productsController *controllers.ProductsController
+	logger             *log.Entry
 }
 
-func New(db *gorm.DB) (*App, error) {
+func New(db *gorm.DB, logger *log.Entry) (*App, error) {
 	err := db.AutoMigrate(&models.Product{})
 	if err != nil {
 		return nil, err
@@ -25,7 +30,8 @@ func New(db *gorm.DB) (*App, error) {
 
 	a := &App{
 		Router:             mux.NewRouter(),
-		productsController: controllers.NewProductsController(productsService),
+		productsController: controllers.NewProductsController(productsService, logger),
+		logger:             logger,
 	}
 
 	a.registerHandlers()
@@ -35,13 +41,33 @@ func New(db *gorm.DB) (*App, error) {
 
 func (a *App) registerHandlers() {
 	a.Router.HandleFunc("/api/ping", controllers.GetPing)
-	a.Router.HandleFunc("/api/products/types", a.productsController.GetAllTypes).Methods("GET")
-	a.Router.HandleFunc("/api/products", a.productsController.GetProducts).Methods("GET")
-	a.Router.HandleFunc("/api/products", a.productsController.PostProduct).Methods("POST")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.GetProductBySku).Methods("GET")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.PutProductBySku).Methods("PUT")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.DeleteProductBySku).Methods("DELETE")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.GetProduct).Methods("GET")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.PutProduct).Methods("PUT")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.DeleteProduct).Methods("DELETE")
+
+	productsRouter := a.Router.PathPrefix("/api").Subrouter()
+	productsRouter.Use(a.logApiRequestMW)
+
+	productsRouter.HandleFunc("/types", a.productsController.GetAllTypes).Methods("GET")
+	productsRouter.HandleFunc("", a.productsController.GetProducts).Methods("GET")
+	productsRouter.HandleFunc("", a.productsController.PostProduct).Methods("POST")
+	productsRouter.HandleFunc("/sku={sku}", a.productsController.GetProductBySku).Methods("GET")
+	productsRouter.HandleFunc("/sku={sku}", a.productsController.PutProductBySku).Methods("PUT")
+	productsRouter.HandleFunc("/sku={sku}", a.productsController.DeleteProductBySku).Methods("DELETE")
+	productsRouter.HandleFunc("/{id}", a.productsController.GetProduct).Methods("GET")
+	productsRouter.HandleFunc("/{id}", a.productsController.PutProduct).Methods("PUT")
+	productsRouter.HandleFunc("/{id}", a.productsController.DeleteProduct).Methods("DELETE")
+}
+
+func (a *App) logApiRequestMW(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pathTemplate, _ := mux.CurrentRoute(r).GetPathTemplate()
+		httpRequestInfo := log.Fields{
+			"method":       r.Method,
+			"pathTemplate": pathTemplate,
+			"timestampUtc": time.Now().UTC(),
+		}
+
+		logMessage := fmt.Sprintf("REST API request")
+		a.logger.WithFields(log.Fields{"httpRequestInfo": httpRequestInfo}).Info(logMessage)
+
+		next.ServeHTTP(w, r)
+	})
 }

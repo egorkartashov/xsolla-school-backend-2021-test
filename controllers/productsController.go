@@ -10,17 +10,19 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
 type ProductsController struct {
 	productsService *services.ProductsService
+	logger          *log.Entry
 }
 
-func NewProductsController(productsService *services.ProductsService) *ProductsController {
+func NewProductsController(productsService *services.ProductsService, logger *log.Entry) *ProductsController {
 	return &ProductsController{
 		productsService: productsService,
+		logger:          logger,
 	}
 }
 
@@ -86,7 +88,7 @@ func (controller *ProductsController) GetProducts(writer http.ResponseWriter, re
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -100,7 +102,7 @@ func (controller *ProductsController) PostProduct(writer http.ResponseWriter, re
 	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusCreated, createdProductDto)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -117,7 +119,7 @@ func (controller *ProductsController) GetProductBySku(writer http.ResponseWriter
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -140,7 +142,7 @@ func (controller *ProductsController) PutProductBySku(writer http.ResponseWriter
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -158,7 +160,7 @@ func (controller *ProductsController) DeleteProductBySku(writer http.ResponseWri
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -174,7 +176,7 @@ func (controller *ProductsController) GetProduct(writer http.ResponseWriter, req
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -196,7 +198,7 @@ func (controller *ProductsController) PutProduct(writer http.ResponseWriter, req
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -212,7 +214,7 @@ func (controller *ProductsController) DeleteProduct(writer http.ResponseWriter, 
 	} else if requestResult.Status == services.NotFound {
 		writer.WriteHeader(http.StatusNotFound)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -221,7 +223,7 @@ func (controller *ProductsController) GetAllTypes(writer http.ResponseWriter, re
 	if requestResult.Status == services.Success {
 		utils.RespondJson(writer, http.StatusOK, types)
 	} else {
-		handleUnknownError(writer, request, requestResult)
+		controller.handleUnknownError(writer, request, requestResult)
 	}
 }
 
@@ -258,8 +260,10 @@ func parseAndValidateProductDto(writer http.ResponseWriter, request *http.Reques
 	return productDto, true
 }
 
-func handleUnknownError(writer http.ResponseWriter, request *http.Request, requestResult services.RequestResult) {
+func (controller *ProductsController) handleUnknownError(writer http.ResponseWriter, request *http.Request, requestResult services.RequestResult) {
 	route, _ := mux.CurrentRoute(request).GetPathTemplate()
-	log.Printf("Error in %s: status = %s, error = %s", route, requestResult.Status, requestResult.Error)
+	controller.logger.Printf("Error in %s: status = %s, error = %s",
+		route, requestResult.Status, requestResult.Error)
+
 	writer.WriteHeader(http.StatusInternalServerError)
 }

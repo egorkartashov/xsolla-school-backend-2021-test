@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/app"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
@@ -29,7 +30,9 @@ func main() {
 		panic(fmt.Sprintf("Failed to connect to database: %s\n", err.Error()))
 	}
 
-	appInstance, err := app.New(db)
+	logger := configureLogger()
+
+	appInstance, err := app.New(db, logger)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to start application: %s\n", err.Error()))
 	}
@@ -46,4 +49,27 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
+}
+
+func configureLogger() *log.Entry {
+	log.SetFormatter(&log.JSONFormatter{})
+
+	standardFields := log.Fields{
+		"appname":  "products-api",
+		"hostname": "localhost",
+	}
+
+	defaultLogger := log.WithFields(standardFields)
+
+	f, err := os.OpenFile("applogs/errors", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		defaultLogger.Fatalf("Error opening file for logs: %s", err)
+	}
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(f)
+
+	log.SetOutput(f)
+
+	return defaultLogger
 }
