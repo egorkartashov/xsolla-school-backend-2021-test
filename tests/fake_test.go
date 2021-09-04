@@ -5,6 +5,6 @@ import (
 	"testing"
 )
 
-func TestFake(t *testing.T) {
+func TestAssertTrueIsTrue(t *testing.T) {
 	assert.True(t, true)
 }
