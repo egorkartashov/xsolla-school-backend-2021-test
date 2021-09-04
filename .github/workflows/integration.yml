@@ -21,6 +21,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Check formatting
+      uses: Jerome1337/gofmt-action@v1.0.4
+
     - name: Fetch dependencies
       run:  go mod download
 
