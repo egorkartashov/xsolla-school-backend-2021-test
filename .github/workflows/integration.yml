@@ -28,7 +28,7 @@ jobs:
       run:  go mod download
 
     - name: Build
-      run: go build -v ./...
+      run: make build
 
     - name: Build Docker image
       uses: docker/build-push-action@v2
@@ -37,4 +37,4 @@ jobs:
         tags: ${{ github.event.repository.name }}:latest, ${{ github.repository }}:latest
 
     - name: Run functional tests
-      run:  go test -v ./...
+      run:  make test
