@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	postgresHostEnvKey     = "POSTGRES_HOST"
+	postgresHostEnvKey     =  "POSTGRES_HOST"
 	postgresDbEnvKey       = "POSTGRES_DB"
 	postgresUsernameEnvKey = "POSTGRES_USERNAME"
 	postgresPasswordEnvKey = "POSTGRES_PASSWORD"
