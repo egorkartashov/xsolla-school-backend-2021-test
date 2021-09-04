@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-//goland:noinspection GoUnusedExportedFunction
 func TestFake(t *testing.T) {
 	assert.True(t, true)
 }
