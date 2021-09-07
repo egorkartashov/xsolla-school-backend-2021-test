@@ -1,0 +1,267 @@
+---
+openapi: 3.0.0
+info:
+  title: Product API 1.0
+  description: |
+    This is a simple Products API
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/egorkartashov/Products_API/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://egor-products-api.herokuapp.com/api
+tags:
+- name: product
+  description: All requests related to products
+paths:
+  /products:
+    get:
+      tags:
+      - product
+      summary: Get all products with pagination
+      parameters:
+      - name: offset
+        in: query
+        description: Offset from which to start returning products
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 0
+      - name: limit
+        in: query
+        description: Max number of products to return
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          default: 50
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsList'
+    post:
+      tags:
+      - product
+      summary: Add a new product
+      requestBody:
+        $ref: '#/components/requestBodies/Product'
+      responses:
+        "201":
+          description: Product successfully created
+        "400":
+          description: Invalid request body
+  /products/{id}:
+    get:
+      tags:
+      - product
+      summary: Get product by its ID
+      parameters:
+      - name: id
+        in: path
+        description: ID of the product to get
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given ID was not found
+    put:
+      tags:
+      - product
+      summary: Update existing product by its ID
+      parameters:
+      - name: id
+        in: path
+        description: ID of the product to update
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        $ref: '#/components/requestBodies/Product'
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given ID was not found
+    delete:
+      tags:
+      - product
+      summary: Delete product by its ID
+      parameters:
+      - name: id
+        in: path
+        description: ID of the product to delete
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: successful operation
+        "404":
+          description: Product with given ID was not found
+  /products/sku={sku}:
+    get:
+      tags:
+      - product
+      summary: Get product by its SKU
+      parameters:
+      - name: sku
+        in: path
+        description: SKU of the product to get
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given SKU was not found
+    put:
+      tags:
+      - product
+      summary: Update existing product by its SKU
+      parameters:
+      - name: sku
+        in: path
+        description: SKU of the product to update
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Product'
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given SKU was not found
+    delete:
+      tags:
+      - product
+      summary: Delete product by its SKU
+      parameters:
+      - name: sku
+        in: path
+        description: SKU of the product to delete
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: successful operation
+        "404":
+          description: Product with given SKU was not found
+  /products/types:
+    get:
+      tags:
+      - product
+      summary: Get all available product types
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+components:
+  schemas:
+    Pagination:
+      required:
+      - limit
+      - offset
+      - size
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        next:
+          type: string
+          format: uri
+        previous:
+          type: string
+          format: uri
+    ProductsList:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductWithId'
+    Product:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        priceInCents:
+          type: integer
+          format: int32
+    ProductWithId:
+      allOf:
+      - required:
+        - id
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+      - $ref: '#/components/schemas/Product'
+  requestBodies:
+    Product:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Product'
+      required: true
