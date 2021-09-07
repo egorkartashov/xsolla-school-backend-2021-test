@@ -17,7 +17,14 @@ paths:
     get:
       tags:
       - product
-      summary: Get all products with pagination
+      summary: Get products with filtration
+      operationId: get_products
+      description: |
+        Get specified number of products with optional filters. Method has following filters: 
+          * minPrice, maxPrice - min/max price of the products returned
+          * type - type of the products returned
+          * offset - how many first products to skip (counted after all the other filters applied) - default is 0
+          * limit - max number of products to return - default is 100
       parameters:
       - name: offset
         in: query
@@ -47,7 +54,10 @@ paths:
     post:
       tags:
       - product
-      summary: Add a new product
+      summary: Create product
+      operationId: create_product
+      description: |
+        Create new product with specified name, SKU, price and type. If another product with the same SKU already exists, 409 Conflict is returned
       requestBody:
         $ref: '#/components/requestBodies/Product'
       responses:
@@ -55,11 +65,16 @@ paths:
           description: Product successfully created
         "400":
           description: Invalid request body
+        "409":
+          description: Product with same SKU already exists
   /products/{id}:
     get:
       tags:
       - product
-      summary: Get product by its ID
+      summary: Get product by ID
+      operationId: get_product_by_id
+      description: |
+        Get product by its ID. All fields of the product are returned. If product is not found, 404 Not Found is returned
       parameters:
       - name: id
         in: path
@@ -82,7 +97,10 @@ paths:
     put:
       tags:
       - product
-      summary: Update existing product by its ID
+      summary: Replace product by ID
+      operationId: replace_product_by_id
+      description: |
+        Replace product by ID. All required fields of the new product must be specified. If product with given ID does not exist, 404 Not Found is returned.
       parameters:
       - name: id
         in: path
@@ -107,7 +125,10 @@ paths:
     delete:
       tags:
       - product
-      summary: Delete product by its ID
+      summary: Delete product by ID
+      operationId: delete_product_by_id
+      description: |
+        Delete product by its ID. If product with given ID does not exist, 404 Not Found is returned.
       parameters:
       - name: id
         in: path
@@ -127,7 +148,10 @@ paths:
     get:
       tags:
       - product
-      summary: Get product by its SKU
+      summary: Get product by SKU
+      operationId: get_product_by_sku
+      description: |
+        Get product by SKU. If product with given SKU does not exist, 404 Not Found is returned.
       parameters:
       - name: sku
         in: path
@@ -150,7 +174,10 @@ paths:
     put:
       tags:
       - product
-      summary: Update existing product by its SKU
+      summary: Replace product by SKU
+      operationId: replace_product_by_sku
+      description: |
+        Replace product by SKU. All required fields of the new product must be specified. If product with given SKU does not exist, 404 Not Found is returned.
       parameters:
       - name: sku
         in: path
@@ -174,7 +201,10 @@ paths:
     delete:
       tags:
       - product
-      summary: Delete product by its SKU
+      summary: Delete product by SKU
+      operationId: delete_product_by_sku
+      description: |
+        Delete product by its SKU. If product with given SKU does not exist, 404 Not Found is returned.
       parameters:
       - name: sku
         in: path
@@ -193,7 +223,10 @@ paths:
     get:
       tags:
       - product
-      summary: Get all available product types
+      summary: Get all existing product types
+      operationId: get_product_types
+      description: |
+        Get all existing product types.
       responses:
         "200":
           description: successful operation
