@@ -12,6 +12,10 @@ servers:
 tags:
 - name: product
   description: All requests related to products
+consumes:
+- application/json
+produces:
+- application/json
 paths:
   /products:
     get:
@@ -20,33 +24,58 @@ paths:
       summary: Get products with filtration
       operationId: get_products
       description: |
-        Get specified number of products with optional filters. Method has following filters: 
-          * minPrice, maxPrice - min/max price of the products returned
-          * type - type of the products returned
-          * offset - how many first products to skip (counted after all the other filters applied) - default is 0
-          * limit - max number of products to return - default is 100
+        Get specified number of products with optional filters. Filters are set using query parameters
       parameters:
+      - name: min_price
+        in: query
+        description: A integer number representing price in cents. The products list will be filtered to include only products with price equal or greater than the value of the parameter.
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minumum: 0
+          defualt: 0
+          maximum: 1000000000
+      - name: max_price
+        in: query
+        description: A integer number representing price in cents. The products list will be filtered to include only products with price equal or less than the value of the parameter.
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minumum: 0
+          defualt: 0
+          maximum: 1000000000
+      - name: type
+        in: query
+        description: A string representing specific product type. The products list will be filetered to include only products which type matches the parameter value.
+        type: string
       - name: offset
         in: query
-        description: Offset from which to start returning products
+        description: A positive integer number representing offset in pagination. 
         required: false
         style: form
         explode: true
         schema:
           type: integer
+          format: int32
+          minimum: 0
           default: 0
       - name: limit
         in: query
-        description: Max number of products to return
+        description: A limit on the number of products to return. Must be an integer number from 0 to 1000
         required: false
         style: form
         explode: true
         schema:
           type: integer
-          default: 50
+          format: int32
+          minimum: 0
+          default: 100
+          maximum: 1000
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -80,14 +109,12 @@ paths:
         in: path
         description: ID of the product to get
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -106,8 +133,6 @@ paths:
         in: path
         description: ID of the product to update
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
           format: uuid
@@ -115,7 +140,7 @@ paths:
         $ref: '#/components/requestBodies/Product'
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -134,14 +159,12 @@ paths:
         in: path
         description: ID of the product to delete
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
         "404":
           description: Product with given ID was not found
   /products/sku={sku}:
@@ -157,14 +180,12 @@ paths:
         in: path
         description: SKU of the product to get
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -183,15 +204,13 @@ paths:
         in: path
         description: SKU of the product to update
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
       requestBody:
         $ref: '#/components/requestBodies/Product'
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -210,13 +229,11 @@ paths:
         in: path
         description: SKU of the product to delete
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
         "404":
           description: Product with given SKU was not found
   /products/types:
@@ -229,7 +246,7 @@ paths:
         Get all existing product types.
       responses:
         "200":
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
@@ -248,18 +265,28 @@ components:
         offset:
           type: integer
           format: int32
+          description: |
+            Offset that was used when making the request. Indicates the number of items skipped from the start of items list (after all other filets applied).
         limit:
           type: integer
           format: int32
+          description: |
+            Limit that was used when making the request. **Does not** indicate the actual number of items returned
         size:
           type: integer
           format: int32
+          description: |
+            Size of the resulting list of items. The value is always less or equal than the value of "limit" propety
         next:
           type: string
           format: uri
+          description: |
+            URL to request the next batch of items. If server does not contain other items after current batch, the link is null.
         previous:
           type: string
           format: uri
+          description: |
+            URL to request the previsous batch of items of size "limit" or less. If server does not contian other items before current batch (i.e. current offset is 0), the link is null.
     ProductsList:
       type: object
       properties:
