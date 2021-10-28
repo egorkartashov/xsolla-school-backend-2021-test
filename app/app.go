@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/egorkartashov/xsolla-school-backend-2021-test/auth"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/controllers"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/database/models"
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/repos"
@@ -35,13 +36,19 @@ func New(db *gorm.DB) (*App, error) {
 
 func (a *App) registerHandlers() {
 	a.Router.HandleFunc("/api/ping", controllers.GetPing)
-	a.Router.HandleFunc("/api/products/types", a.productsController.GetAllTypes).Methods("GET")
-	a.Router.HandleFunc("/api/products", a.productsController.GetProducts).Methods("GET")
-	a.Router.HandleFunc("/api/products", a.productsController.PostProduct).Methods("POST")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.GetProductBySku).Methods("GET")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.PutProductBySku).Methods("PUT")
-	a.Router.HandleFunc("/api/products/sku={sku}", a.productsController.DeleteProductBySku).Methods("DELETE")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.GetProduct).Methods("GET")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.PutProduct).Methods("PUT")
-	a.Router.HandleFunc("/api/products/{id}", a.productsController.DeleteProduct).Methods("DELETE")
+
+	productsRouter := a.Router.PathPrefix("/api/products").Subrouter()
+	productsRouter.Use(auth.JwtAuthMW)
+	modifyProductsRouter := a.Router.PathPrefix("/api/products").Subrouter()
+	modifyProductsRouter.Use(auth.VendorAuthMW)
+
+	modifyProductsRouter.HandleFunc("", a.productsController.PostProduct).Methods("POST")
+	productsRouter.HandleFunc("/types", a.productsController.GetAllTypes).Methods("GET")
+	productsRouter.HandleFunc("", a.productsController.GetProducts).Methods("GET")
+	productsRouter.HandleFunc("/sku={sku}", a.productsController.GetProductBySku).Methods("GET")
+	modifyProductsRouter.HandleFunc("/sku={sku}", a.productsController.PutProductBySku).Methods("PUT")
+	modifyProductsRouter.HandleFunc("/sku={sku}", a.productsController.DeleteProductBySku).Methods("DELETE")
+	productsRouter.HandleFunc("/{id}", a.productsController.GetProduct).Methods("GET")
+	modifyProductsRouter.HandleFunc("/{id}", a.productsController.PutProduct).Methods("PUT")
+	modifyProductsRouter.HandleFunc("/{id}", a.productsController.DeleteProduct).Methods("DELETE")
 }
