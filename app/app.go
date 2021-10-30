@@ -21,7 +21,7 @@ func New(db *gorm.DB) (*App, error) {
 		return nil, err
 	}
 
-	productsRepo := repos.NewProductsRepo(db)
+	var productsRepo repos.ProductsRepoInterface = repos.NewProductsRepo(db)
 	productsService := services.NewProductsService(productsRepo)
 
 	a := &App{

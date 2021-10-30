@@ -11,7 +11,7 @@ import (
 )
 
 type ProductsService struct {
-	productsRepo *repos.ProductsRepo
+	productsRepo repos.ProductsRepoInterface
 }
 
 type singleProductResult struct {
@@ -24,7 +24,7 @@ type productsListResult struct {
 	err          error
 }
 
-func NewProductsService(productsRepo *repos.ProductsRepo) *ProductsService {
+func NewProductsService(productsRepo repos.ProductsRepoInterface) *ProductsService {
 	return &ProductsService{
 		productsRepo: productsRepo,
 	}
