@@ -10,8 +10,9 @@ import (
 )
 
 type App struct {
-	Router             *mux.Router
-	productsController *controllers.ProductsController
+	Router                    *mux.Router
+	productsController        *controllers.ProductsController
+	productsGraphqlController *controllers.ProductsGraphqlController
 }
 
 func New(db *gorm.DB) (*App, error) {
@@ -24,8 +25,9 @@ func New(db *gorm.DB) (*App, error) {
 	productsService := services.NewProductsService(productsRepo)
 
 	a := &App{
-		Router:             mux.NewRouter(),
-		productsController: controllers.NewProductsController(productsService),
+		Router:                    mux.NewRouter(),
+		productsController:        controllers.NewProductsController(productsService),
+		productsGraphqlController: controllers.NewProductsGraphqlController(productsService),
 	}
 
 	a.registerHandlers()
@@ -34,6 +36,7 @@ func New(db *gorm.DB) (*App, error) {
 }
 
 func (a *App) registerHandlers() {
+	a.Router.Path("/api/products").Queries("query", "{.*}").HandlerFunc(a.productsGraphqlController.HandleQuery)
 	a.Router.HandleFunc("/api/ping", controllers.GetPing)
 	a.Router.HandleFunc("/api/products/types", a.productsController.GetAllTypes).Methods("GET")
 	a.Router.HandleFunc("/api/products", a.productsController.GetProducts).Methods("GET")
