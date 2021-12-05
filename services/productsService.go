@@ -8,10 +8,12 @@ import (
 	"github.com/egorkartashov/xsolla-school-backend-2021-test/repos"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"log"
 )
 
 type ProductsService struct {
-	productsRepo repos.ProductsRepoInterface
+	productsRepo         repos.ProductsRepoInterface
+	messageBrokerService *MessageBrokerService
 }
 
 type singleProductResult struct {
@@ -24,9 +26,10 @@ type productsListResult struct {
 	err          error
 }
 
-func NewProductsService(productsRepo repos.ProductsRepoInterface) *ProductsService {
+func NewProductsService(productsRepo repos.ProductsRepoInterface, messageBrokerService *MessageBrokerService) *ProductsService {
 	return &ProductsService{
-		productsRepo: productsRepo,
+		productsRepo:         productsRepo,
+		messageBrokerService: messageBrokerService,
 	}
 }
 
@@ -100,6 +103,13 @@ func (service *ProductsService) CreateProduct(productDto *dto.ProductDto) (*dto.
 	requestResult := createRequestResult(result.err)
 	if requestResult.Status != Success {
 		return nil, requestResult
+	}
+
+	if len(productDto.LandingUrl) > 0 {
+		log.Printf("Sending landing url (%s) for check", productDto.LandingUrl)
+		service.messageBrokerService.SendUrlForCheck(productDto.LandingUrl)
+	} else {
+		log.Print("Landing URL is empty, not sending for check")
 	}
 
 	createdProductDto := mapModelToDto(result.product)
