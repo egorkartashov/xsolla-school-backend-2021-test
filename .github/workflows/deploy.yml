@@ -1,0 +1,23 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build Docker container and deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "egor-products-api"
+          heroku_email: "edkartashov@edu.hse.ru"
+          healthcheck: "https://egor-products-api.herokuapp.com/api/ping"
+          delay: 10
+          usedocker: true
