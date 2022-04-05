@@ -1,0 +1,327 @@
+---
+openapi: 3.0.0
+info:
+  title: Product API 1.0
+  description: |
+    This is a simple Products API
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/egorkartashov/Products_API/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://egor-products-api.herokuapp.com/api
+tags:
+- name: product
+  description: All requests related to products
+consumes:
+- application/json
+produces:
+- application/json
+paths:
+  /products:
+    get:
+      tags:
+      - product
+      summary: Get products with filtration
+      operationId: get_products
+      description: |
+        Get specified number of products with optional filters. Filters are set using query parameters
+      parameters:
+      - name: min_price
+        in: query
+        description: A integer number representing price in cents. The products list will be filtered to include only products with price equal or greater than the value of the parameter.
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minumum: 0
+          defualt: 0
+          maximum: 1000000000
+      - name: max_price
+        in: query
+        description: A integer number representing price in cents. The products list will be filtered to include only products with price equal or less than the value of the parameter.
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minumum: 0
+          defualt: 0
+          maximum: 1000000000
+      - name: type
+        in: query
+        description: A string representing specific product type. The products list will be filetered to include only products which type matches the parameter value.
+        type: string
+      - name: offset
+        in: query
+        description: A positive integer number representing offset in pagination. 
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: limit
+        in: query
+        description: A limit on the number of products to return. Must be an integer number from 0 to 1000
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 100
+          maximum: 1000
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsList'
+    post:
+      tags:
+      - product
+      summary: Create product
+      operationId: create_product
+      description: |
+        Create new product with specified name, SKU, price and type. If another product with the same SKU already exists, 409 Conflict is returned
+      requestBody:
+        $ref: '#/components/requestBodies/Product'
+      responses:
+        "201":
+          description: Product successfully created
+        "400":
+          description: Invalid request body
+        "409":
+          description: Product with same SKU already exists
+  /products/{id}:
+    get:
+      tags:
+      - product
+      summary: Get product by ID
+      operationId: get_product_by_id
+      description: |
+        Get product by its ID. All fields of the product are returned. If product is not found, 404 Not Found is returned
+      parameters:
+      - name: id
+        in: path
+        description: ID of the product to get
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given ID was not found
+    put:
+      tags:
+      - product
+      summary: Replace product by ID
+      operationId: replace_product_by_id
+      description: |
+        Replace product by ID. All required fields of the new product must be specified. If product with given ID does not exist, 404 Not Found is returned.
+      parameters:
+      - name: id
+        in: path
+        description: ID of the product to update
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        $ref: '#/components/requestBodies/Product'
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given ID was not found
+    delete:
+      tags:
+      - product
+      summary: Delete product by ID
+      operationId: delete_product_by_id
+      description: |
+        Delete product by its ID. If product with given ID does not exist, 404 Not Found is returned.
+      parameters:
+      - name: id
+        in: path
+        description: ID of the product to delete
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Successful operation
+        "404":
+          description: Product with given ID was not found
+  /products/sku={sku}:
+    get:
+      tags:
+      - product
+      summary: Get product by SKU
+      operationId: get_product_by_sku
+      description: |
+        Get product by SKU. If product with given SKU does not exist, 404 Not Found is returned.
+      parameters:
+      - name: sku
+        in: path
+        description: SKU of the product to get
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given SKU was not found
+    put:
+      tags:
+      - product
+      summary: Replace product by SKU
+      operationId: replace_product_by_sku
+      description: |
+        Replace product by SKU. All required fields of the new product must be specified. If product with given SKU does not exist, 404 Not Found is returned.
+      parameters:
+      - name: sku
+        in: path
+        description: SKU of the product to update
+        required: true
+        schema:
+          type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Product'
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithId'
+        "404":
+          description: Product with given SKU was not found
+    delete:
+      tags:
+      - product
+      summary: Delete product by SKU
+      operationId: delete_product_by_sku
+      description: |
+        Delete product by its SKU. If product with given SKU does not exist, 404 Not Found is returned.
+      parameters:
+      - name: sku
+        in: path
+        description: SKU of the product to delete
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Successful operation
+        "404":
+          description: Product with given SKU was not found
+  /products/types:
+    get:
+      tags:
+      - product
+      summary: Get all existing product types
+      operationId: get_product_types
+      description: |
+        Get all existing product types.
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+components:
+  schemas:
+    Pagination:
+      required:
+      - limit
+      - offset
+      - size
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int32
+          description: |
+            Offset that was used when making the request. Indicates the number of items skipped from the start of items list (after all other filets applied).
+        limit:
+          type: integer
+          format: int32
+          description: |
+            Limit that was used when making the request. **Does not** indicate the actual number of items returned
+        size:
+          type: integer
+          format: int32
+          description: |
+            Size of the resulting list of items. The value is always less or equal than the value of "limit" propety
+        next:
+          type: string
+          format: uri
+          description: |
+            URL to request the next batch of items. If server does not contain other items after current batch, the link is null.
+        previous:
+          type: string
+          format: uri
+          description: |
+            URL to request the previsous batch of items of size "limit" or less. If server does not contian other items before current batch (i.e. current offset is 0), the link is null.
+    ProductsList:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductWithId'
+    Product:
+      type: object
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        priceInCents:
+          type: integer
+          format: int32
+    ProductWithId:
+      allOf:
+      - required:
+        - id
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+      - $ref: '#/components/schemas/Product'
+  requestBodies:
+    Product:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Product'
+      required: true
